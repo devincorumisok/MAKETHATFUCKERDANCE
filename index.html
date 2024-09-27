@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MAKE THAT FUCKER DANCE</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: white;
+            overflow: hidden; /* Prevent overflow from animations */
+            background: black; /* Initial background color */
+            transition: background 1s; /* Smooth transition for background changes */
+        }
+
+        .title {
+            font-size: 2rem; /* Title font size */
+            font-weight: bold; /* Make it bold */
+            margin-bottom: 20px; /* Space below the title */
+        }
+
+        .spinner-container {
+            perspective: 1000px; /* Enable 3D perspective */
+            width: 200px; /* Container width */
+            height: 200px; /* Container height */
+            margin-bottom: 20px; /* Space between spinner and controls */
+        }
+
+        .spinner {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            transform-style: preserve-3d; /* Enable 3D transformations */
+            animation: spin 2s linear infinite; /* Default spin animation */
+        }
+
+        .front, .back {
+            position: absolute;
+            backface-visibility: hidden; /* Hide back face during flip */
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .front {
+            /* No specific styling */
+        }
+
+        .back {
+            transform: rotateY(180deg); /* Rotate back face 180 degrees */
+        }
+
+        @keyframes bounce {
+            0% {
+                transform: translateY(0); /* Start position */
+            }
+            50% {
+                transform: translateY(-10px); /* Bounce height */
+            }
+            100% {
+                transform: translateY(0); /* Return to start */
+            }
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotateY(0deg);
+            }
+            to {
+                transform: rotateY(360deg);
+            }
+        }
+
+        @keyframes changeBackground {
+            0% {
+                background-color: rgb(255, 0, 0); /* Red */
+            }
+            25% {
+                background-color: rgb(0, 255, 0); /* Green */
+            }
+            50% {
+                background-color: rgb(0, 0, 255); /* Blue */
+            }
+            75% {
+                background-color: rgb(255, 255, 0); /* Yellow */
+            }
+            100% {
+                background-color: rgb(255, 0, 255); /* Magenta */
+            }
+        }
+
+        .controls {
+            text-align: center;
+        }
+
+        .slider {
+            width: 80%;
+            margin: 10px 0;
+        }
+
+        .toggle-container {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="title">MAKE THIS FUCKER DANCE!</h1> <!-- Added title here -->
+    <audio id="partyMusic" src="music.mp3" loop></audio>
+    <div class="spinner-container">
+        <div id="spinner" class="spinner">
+            <div class="front">
+                <img id="spinnerImage" alt="Front Image" style="width: 100%; height: 100%;">
+            </div>
+            <div class="back">
+                <img id="backImage" alt="Back Image" style="width: 100%; height: 100%;">
+            </div>
+        </div>
+    </div>
+    <div class="controls">
+        <input type="file" id="imageUpload" accept="image/png" onchange="uploadImage()">
+        <br>
+        <label for="bounceHeight">Bounce Height:</label>
+        <input type="range" id="bounceHeight" class="slider" min="0" max="100" value="10" oninput="updateBounce()">
+        <span id="bounceHeightValue">10px</span>
+        <br>
+        <label for="bounceSpeed">Bounce Speed:</label>
+        <input type="range" id="bounceSpeed" class="slider" min="0.1" max="2" step="0.1" value="0.5" oninput="updateBounceSpeed()">
+        <span id="bounceSpeedValue">0.5s</span>
+        <br>
+        <label for="spinSpeed">Spin Speed:</label>
+        <input type="range" id="spinSpeed" class="slider" min="1" max="10" step="0.1" value="2" oninput="updateSpinSpeed()">
+        <span id="spinSpeedValue">2s</span>
+        <br>
+
+        <div class="toggle-container">
+            <label><input type="checkbox" id="bounceToggle" onchange="toggleBounce()" checked> Enable Bounce</label>
+            <br>
+            <label><input type="checkbox" id="spinToggle" onchange="toggleSpin()" checked> Enable Spin</label>
+            <br>
+            <label><input type="checkbox" id="danceMode" onchange="toggleDanceMode()"> Dance Mode</label>
+        </div>
+
+        <label class="party-mode">
+            <input type="checkbox" id="partyMode" onchange="togglePartyMode()"> Party Mode
+        </label>
+    </div>
+
+    <script>
+        let isPartyMode = false;
+        let danceEnabled = false;
+        let bounceEnabled = true;
+        let spinEnabled = true;
+        let danceInterval;
+
+        function uploadImage() {
+            const file = document.getElementById('imageUpload').files[0];
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.src = event.target.result;
+                img.onload = function() {
+                    document.getElementById('spinnerImage').src = img.src;
+                    createBackImage(img);
+                };
+            };
+            if (file) {
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function createBackImage(img) {
+            const canvas = document.createElement('canvas');
+            canvas.width = img.width;
+            canvas.height = img.height;
+            const ctx = canvas.getContext('2d');
+
+            // Draw the inverted image
+            ctx.scale(-1, 1);
+            ctx.drawImage(img, -img.width, 0);
+            document.getElementById('backImage').src = canvas.toDataURL();
+        }
+
+        function updateBounce() {
+            const bounceHeight = document.getElementById('bounceHeight').value;
+            document.getElementById('bounceHeightValue').innerText = bounceHeight + 'px';
+            const spinner = document.getElementById('spinner');
+            spinner.style.animation = bounceEnabled ? `bounce ${bounceHeight / 100}s ease-in-out infinite` : 'none'; // Apply bounce height
+        }
+
+        function updateBounceSpeed() {
+            const speed = document.getElementById('bounceSpeed').value;
+            document.getElementById('bounceSpeedValue').innerText = speed + 's';
+            const spinner = document.getElementById('spinner');
+            if (bounceEnabled) {
+                spinner.style.animation = `bounce ${speed}s ease-in-out infinite`; // Update bounce speed
+            }
+        }
+
+        function updateSpinSpeed() {
+            const spinSpeed = document.getElementById('spinSpeed').value;
+            document.getElementById('spinSpeedValue').innerText = spinSpeed + 's';
+            const spinner = document.getElementById('spinner');
+            if (spinEnabled) {
+                spinner.style.animation = `spin ${spinSpeed}s linear infinite`; // Update spin speed
+            }
+        }
+
+        function toggleBounce() {
+            bounceEnabled = document.getElementById('bounceToggle').checked;
+            updateBounce(); // Update bounce animation
+        }
+
+        function toggleSpin() {
+            spinEnabled = document.getElementById('spinToggle').checked;
+            updateSpinSpeed(); // Update spin animation
+        }
+
+        function toggleDanceMode() {
+            danceEnabled = document.getElementById('danceMode').checked;
+            const spinner = document.getElementById('spinner');
+
+            if (danceEnabled) {
+                startDance(); // Start dance with varied animations
+            } else {
+                clearInterval(danceInterval); // Clear dance effect
+                toggleBounce(); // Restore bounce state
+                toggleSpin(); // Restore spin state
+                spinner.style.animation = `spin ${document.getElementById('spinSpeed').value}s linear infinite`;
+            }
+        }
+
+        function startDance() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const analyser = audioContext.createAnalyser();
+            const partyMusic = document.getElementById('partyMusic');
+            const source = audioContext.createMediaElementSource(partyMusic);
+            source.connect(analyser);
+            analyser.connect(audioContext.destination);
+            analyser.fftSize = 256; // Set FFT size for frequency analysis
+
+            const dataArray = new Uint8Array(analyser.frequencyBinCount); // Create array for frequency data
+            danceInterval = setInterval(() => {
+                analyser.getByteFrequencyData(dataArray); // Get frequency data
+
+                // Calculate average frequency
+                const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
+
+                // Adjust dance effects based on the average frequency
+                const bounceHeight = Math.min(Math.max(average / 10, 5), 30); // Map average frequency to bounce height
+                const spinSpeed = Math.max(1, average / 50); // Map average frequency to spin speed
+
+                // Apply bounce and spin animations
+                const spinner = document.getElementById('spinner');
+                spinner.style.animation = `bounce ${bounceHeight / 100}s ease-in-out infinite`;
+
+                // Adjust spin animation speed
+                if (spinEnabled) {
+                    spinner.style.animation += `, spin ${spinSpeed}s linear infinite`; // Append spin animation
+                } else {
+                    spinner.style.animation = `bounce ${bounceHeight / 100}s ease-in-out infinite`; // Only bounce
+                }
+            }, 100); // Update every 100 ms
+        }
+
+        function togglePartyMode() {
+            isPartyMode = !isPartyMode;
+            const partyMusic = document.getElementById('partyMusic');
+            if (isPartyMode) {
+                partyMusic.play();
+                document.body.style.animation = `changeBackground 1s linear infinite`; // Change background color faster
+            } else {
+                partyMusic.pause();
+                document.body.style.animation = 'none'; // Stop background color change
+                document.body.style.backgroundColor = 'black'; // Reset background color
+            }
+        }
+
+        // Start initial bounce and spin
+        updateBounceSpeed(); // Call to initialize bounce
+        updateSpinSpeed(); // Call to initialize spin
+    </script>
+</body>
+</html>
