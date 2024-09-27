@@ -8,20 +8,19 @@
         body {
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            justify-content: flex-start; /* Align items to the top */
             align-items: center;
-            height: 100vh;
             margin: 0;
             color: white;
-            overflow: hidden; /* Prevent overflow from animations */
+            overflow: auto; /* Enable scrolling */
             background: black; /* Initial background color */
             transition: background 1s; /* Smooth transition for background changes */
         }
 
         .title {
-            font-size: 2rem; /* Title font size */
-            font-weight: bold; /* Make it bold */
-            margin-bottom: 20px; /* Space below the title */
+            font-weight: bold;
+            font-size: 2rem; /* Adjust title size */
+            margin: 20px 0; /* Space around the title */
         }
 
         .spinner-container {
@@ -111,7 +110,7 @@
     </style>
 </head>
 <body>
-    <h1 class="title">MAKE THIS FUCKER DANCE!</h1> <!-- Added title here -->
+    <h1 class="title">MAKE THIS FUCKER DANCE!</h1>
     <audio id="partyMusic" src="music.mp3" loop></audio>
     <div class="spinner-container">
         <div id="spinner" class="spinner">
@@ -237,36 +236,35 @@
         }
 
         function startDance() {
-            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            const analyser = audioContext.createAnalyser();
-            const partyMusic = document.getElementById('partyMusic');
-            const source = audioContext.createMediaElementSource(partyMusic);
-            source.connect(analyser);
-            analyser.connect(audioContext.destination);
-            analyser.fftSize = 256; // Set FFT size for frequency analysis
-
-            const dataArray = new Uint8Array(analyser.frequencyBinCount); // Create array for frequency data
+            const spinner = document.getElementById('spinner');
             danceInterval = setInterval(() => {
-                analyser.getByteFrequencyData(dataArray); // Get frequency data
+                const randomAction = Math.floor(Math.random() * 3); // Choose a random action
+                const bounceHeight = Math.random() * 20 + 5; // Random bounce height between 5px and 25px
+                const spinSpeed = Math.random() * 3 + 1; // Random spin speed between 1s and 4s
+                const translateX = (Math.random() - 0.5) * 50; // Random horizontal movement
 
-                // Calculate average frequency
-                const average = dataArray.reduce((sum, value) => sum + value, 0) / dataArray.length;
-
-                // Adjust dance effects based on the average frequency
-                const bounceHeight = Math.min(Math.max(average / 10, 5), 30); // Map average frequency to bounce height
-                const spinSpeed = Math.max(1, average / 50); // Map average frequency to spin speed
-
-                // Apply bounce and spin animations
-                const spinner = document.getElementById('spinner');
-                spinner.style.animation = `bounce ${bounceHeight / 100}s ease-in-out infinite`;
-
-                // Adjust spin animation speed
-                if (spinEnabled) {
-                    spinner.style.animation += `, spin ${spinSpeed}s linear infinite`; // Append spin animation
+                if (randomAction === 0) {
+                    // Bounce action
+                    spinner.style.animation = `bounce ${bounceHeight / 100}s ease-in-out infinite`;
+                } else if (randomAction === 1) {
+                    // Spin action
+                    spinner.style.animation = `spin ${spinSpeed}s linear infinite`;
                 } else {
-                    spinner.style.animation = `bounce ${bounceHeight / 100}s ease-in-out infinite`; // Only bounce
+                    // Random movement action
+                    spinner.style.transform = `translateX(${translateX}px) rotateY(360deg)`; // Move and rotate
+                    setTimeout(() => {
+                        spinner.style.transform = 'translateX(0) rotateY(0deg)'; // Reset position
+                    }, 1000); // Reset after 1 second
                 }
-            }, 100); // Update every 100 ms
+
+                // Randomly toggle bounce and spin states for variety
+                if (Math.random() < 0.5) {
+                    toggleBounce();
+                }
+                if (Math.random() < 0.5) {
+                    toggleSpin();
+                }
+            }, 1000); // Repeat every 1 second
         }
 
         function togglePartyMode() {
